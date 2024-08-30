@@ -18,5 +18,18 @@
     
     <!-- Global properties -->
 
+    <filter>
+        <filter-name>FHIR Proxy</filter-name>
+        <filter-class>org.openmrs.module.fhirproxy.web.filter.FhirProxyFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>FHIR Proxy</filter-name>
+        <url-pattern>/ws/fhir/R4/ChargeItemDefinition</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>FHIR Proxy</filter-name>
+        <url-pattern>/ws/fhir/R4/InventoryItem</url-pattern>
+    </filter-mapping>
 </module>
 
