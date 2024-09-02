@@ -28,23 +28,26 @@ import org.slf4j.LoggerFactory;
  * and InventoryItem FHIR resources and forwards them to it.
  */
 public class FhirProxyFilter implements Filter {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(FhirProxyFilter.class);
-	
+
 	@Override
 	public void init(FilterConfig filterConfig) {
 	}
-	
+
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
 	        throws IOException, ServletException {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Intercepting request {}", ((HttpServletRequest) servletRequest).getRequestURI());
 		}
-		
+
+		HttpServletRequest request = (HttpServletRequest) servletRequest;
+		final String uri = request.getRequestURI();
+		servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, uri.substring(uri.lastIndexOf("/") + 1));
 		servletRequest.getRequestDispatcher(ProxyWebConstants.PATH_FORWARD).forward(servletRequest, servletResponse);
 	}
-	
+
 	@Override
 	public void destroy() {
 	}

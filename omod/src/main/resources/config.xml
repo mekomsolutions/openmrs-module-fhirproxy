@@ -17,6 +17,24 @@
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.FhirProxyActivator</activator>
     
     <!-- Global properties -->
+    <globalProperty>
+        <property>${project.parent.artifactId}.external.api.base.url</property>
+        <description>
+            The base URL for the external API
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>${project.parent.artifactId}.resource.charge.item</property>
+        <description>
+            Charge item resource name in the external API
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>${project.parent.artifactId}.resource.inventory.item</property>
+        <description>
+            Inventory item resource name in the external API
+        </description>
+    </globalProperty>
 
     <filter>
         <filter-name>FHIR Proxy</filter-name>
