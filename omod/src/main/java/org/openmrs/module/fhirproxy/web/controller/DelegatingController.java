@@ -10,16 +10,15 @@
 package org.openmrs.module.fhirproxy.web.controller;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.openmrs.module.fhirproxy.ProxyWebConstants.GP_BASE_URL;
+import static java.util.Base64.getEncoder;
 import static org.springframework.http.HttpMethod.GET;
 
-import java.util.Base64;
+import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.openmrs.GlobalProperty;
-import org.openmrs.api.AdministrationService;
-import org.openmrs.api.GlobalPropertyListener;
+import org.openmrs.module.fhirproxy.Config;
+import org.openmrs.module.fhirproxy.FhirProxyUtils;
 import org.openmrs.module.fhirproxy.ProxyWebConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,67 +31,33 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Provides a proxy mechanism for all GET requests for ChargeItemDefinition and InventoryItem FHIR
- * resources by forwarding them to the configured external API.
+ * resources by delegating to a configured external API to process the request.
  */
-@RestController("fhirProxyController")
-public class FhirProxyController implements GlobalPropertyListener {
+@RestController("delegatingController")
+public class DelegatingController {
 
-	private static final Logger LOG = LoggerFactory.getLogger(FhirProxyController.class);
+	private static final Logger LOG = LoggerFactory.getLogger(DelegatingController.class);
 
 	private RestTemplate restTemplate;
 
-	private AdministrationService adminService;
-
-	private String baseUrl;
-
-	public FhirProxyController(AdministrationService adminService) {
-		this.adminService = adminService;
-	}
-
-	@GetMapping(ProxyWebConstants.PATH_FORWARD)
-	public Object forward(HttpServletRequest request) {
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("Forward FHIR request -> {}", request.getRequestURI());
-		}
-
+	@GetMapping(ProxyWebConstants.PATH_DELEGATE)
+	public Object delegate(HttpServletRequest request) throws IOException {
 		if (restTemplate == null) {
 			restTemplate = new RestTemplate();
 		}
 
-		if (baseUrl == null) {
-			baseUrl = adminService.getGlobalProperty(GP_BASE_URL);
-		}
-
 		final String resource = request.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME).toString();
-		String url = baseUrl + "/" + resource;
+		final Config cfg = FhirProxyUtils.getConfig();
+		String url = cfg.getBaseUrl() + "/" + resource;
 		final Object id = request.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID);
 		if (id != null) {
 			url += ("/" + id);
 		}
 
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+		final String auth = getEncoder().encodeToString((cfg.getUsername() + ":" + cfg.getPassword()).getBytes(UTF_8));
 		HttpHeaders headers = new HttpHeaders();
-		String auth = Base64.getEncoder().encodeToString(":".getBytes(UTF_8));
 		headers.add(HttpHeaders.AUTHORIZATION, "Basic " + auth);
 		return restTemplate.exchange(builder.encode().toUriString(), GET, new HttpEntity<>(headers), Object.class);
-	}
-
-	@Override
-	public boolean supportsPropertyName(String s) {
-		return s.equals(GP_BASE_URL);
-	}
-
-	@Override
-	public void globalPropertyChanged(GlobalProperty globalProperty) {
-		if (GP_BASE_URL.equals(globalProperty.getProperty())) {
-			baseUrl = null;
-		}
-	}
-
-	@Override
-	public void globalPropertyDeleted(String s) {
-		if (GP_BASE_URL.equals(s)) {
-			baseUrl = null;
-		}
 	}
 }

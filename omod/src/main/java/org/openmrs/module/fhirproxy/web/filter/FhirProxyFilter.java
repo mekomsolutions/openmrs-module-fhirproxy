@@ -9,7 +9,8 @@
  */
 package org.openmrs.module.fhirproxy.web.filter;
 
-import static org.openmrs.module.fhirproxy.ProxyWebConstants.REQUEST_ROOT_PATH;
+import static org.openmrs.module.fhirproxy.ProxyWebConstants.PATH_DELEGATE;
+import static org.openmrs.module.fhirproxy.ProxyWebConstants.REQ_ROOT_PATH;
 
 import java.io.IOException;
 
@@ -21,6 +22,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import org.openmrs.module.fhirproxy.FhirProxyUtils;
 import org.openmrs.module.fhirproxy.ProxyWebConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,16 +46,25 @@ public class FhirProxyFilter implements Filter {
 			LOG.debug("Intercepting request {}", ((HttpServletRequest) servletRequest).getRequestURI());
 		}
 
-		//TODO If external API is configured forward otherwise skip
-		HttpServletRequest request = (HttpServletRequest) servletRequest;
-		final String uri = request.getRequestURI();
-		String[] resAndId = uri.substring(uri.lastIndexOf(REQUEST_ROOT_PATH) + REQUEST_ROOT_PATH.length()).split("/");
-		servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, resAndId[0]);
-		if (resAndId.length == 2) {
-			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID, resAndId[1]);
+		if (FhirProxyUtils.getConfig().isExternalApiEnabled()) {
+			HttpServletRequest request = (HttpServletRequest) servletRequest;
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("Delegating to external API the FHIR request -> {}", request.getRequestURI());
+			}
+
+			//TODO Forward request parameters too
+			//TODO Possibly forward some useful headers too e.g. Content-Type and Accept
+			final String uri = request.getRequestURI();
+			String[] resAndId = uri.substring(uri.lastIndexOf(REQ_ROOT_PATH) + REQ_ROOT_PATH.length()).split("/");
+			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, resAndId[0]);
+			if (resAndId.length == 2) {
+				servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID, resAndId[1]);
+			}
+
+			servletRequest.getRequestDispatcher(PATH_DELEGATE).forward(servletRequest, servletResponse);
 		}
 
-		servletRequest.getRequestDispatcher(ProxyWebConstants.PATH_FORWARD).forward(servletRequest, servletResponse);
+		filterChain.doFilter(servletRequest, servletResponse);
 	}
 
 	@Override

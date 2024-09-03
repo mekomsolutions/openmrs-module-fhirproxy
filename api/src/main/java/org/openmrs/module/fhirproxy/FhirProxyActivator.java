@@ -22,6 +22,7 @@ public class FhirProxyActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void started() {
+		//TODO Load config and ensure required fields are set otherwise fail.
 		log.info("FHIR Proxy module started");
 	}
 

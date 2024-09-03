@@ -12,15 +12,13 @@ package org.openmrs.module.fhirproxy;
 import static org.openmrs.module.fhirproxy.Constants.MODULE_ID;
 
 public class ProxyWebConstants {
-
-	public static final String REQUEST_ROOT_PATH = "/ws/fhir/R4/";
-
-	public static final String PATH_FORWARD = "/module/" + MODULE_ID + "/forward.htm";
-
+	
+	public static final String REQ_ROOT_PATH = "/ws/fhir/R4/";
+	
+	public static final String PATH_DELEGATE = "/module/" + MODULE_ID + "/delegate.htm";
+	
 	public static final String ATTRIB_RESOURCE_NAME = "resourceName";
-
+	
 	public static final String ATTRIB_RESOURCE_ID = "resourceId";
-
-	public static final String GP_BASE_URL = MODULE_ID + ".external.api.base.url";
-
+	
 }
