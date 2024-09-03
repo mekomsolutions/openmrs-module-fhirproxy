@@ -9,6 +9,8 @@
  */
 package org.openmrs.module.fhirproxy.web.filter;
 
+import static org.openmrs.module.fhirproxy.ProxyWebConstants.REQUEST_ROOT_PATH;
+
 import java.io.IOException;
 
 import javax.servlet.Filter;
@@ -42,9 +44,15 @@ public class FhirProxyFilter implements Filter {
 			LOG.debug("Intercepting request {}", ((HttpServletRequest) servletRequest).getRequestURI());
 		}
 
+		//TODO If external API is configured forward otherwise skip
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		final String uri = request.getRequestURI();
-		servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, uri.substring(uri.lastIndexOf("/") + 1));
+		String[] resAndId = uri.substring(uri.lastIndexOf(REQUEST_ROOT_PATH) + REQUEST_ROOT_PATH.length()).split("/");
+		servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, resAndId[0]);
+		if (resAndId.length == 2) {
+			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID, resAndId[1]);
+		}
+
 		servletRequest.getRequestDispatcher(ProxyWebConstants.PATH_FORWARD).forward(servletRequest, servletResponse);
 	}
 

@@ -9,9 +9,11 @@
  */
 package org.openmrs.module.fhirproxy.web.controller;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.openmrs.module.fhirproxy.ProxyWebConstants.GP_BASE_URL;
-import static org.openmrs.module.fhirproxy.ProxyWebConstants.GP_RES_NAME_CHARGE;
-import static org.openmrs.module.fhirproxy.ProxyWebConstants.GP_RES_NAME_INVENTORY;
+import static org.springframework.http.HttpMethod.GET;
+
+import java.util.Base64;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,6 +23,8 @@ import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.module.fhirproxy.ProxyWebConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
@@ -41,16 +45,12 @@ public class FhirProxyController implements GlobalPropertyListener {
 
 	private String baseUrl;
 
-	private String chargeResource;
-
-	private String inventoryResource;
-
 	public FhirProxyController(AdministrationService adminService) {
 		this.adminService = adminService;
 	}
 
 	@GetMapping(ProxyWebConstants.PATH_FORWARD)
-	public Object forward(HttpServletRequest request) throws Exception {
+	public Object forward(HttpServletRequest request) {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Forward FHIR request -> {}", request.getRequestURI());
 		}
@@ -63,41 +63,29 @@ public class FhirProxyController implements GlobalPropertyListener {
 			baseUrl = adminService.getGlobalProperty(GP_BASE_URL);
 		}
 
-		if (chargeResource == null) {
-			chargeResource = adminService.getGlobalProperty(GP_RES_NAME_CHARGE);
-		}
-
-		if (inventoryResource == null) {
-			inventoryResource = adminService.getGlobalProperty(GP_RES_NAME_INVENTORY);
-		}
-
 		final String resource = request.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME).toString();
-		String targetResource;
-		if (ProxyWebConstants.RES_NAME_CHARGE.equals(resource)) {
-			targetResource = chargeResource;
-		} else if (ProxyWebConstants.RES_NAME_INVENTORY.equals(resource)) {
-			targetResource = inventoryResource;
-		} else {
-			throw new Exception("Unsupported resource " + resource);
+		String url = baseUrl + "/" + resource;
+		final Object id = request.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID);
+		if (id != null) {
+			url += ("/" + id);
 		}
 
-		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl + "/" + targetResource);
-		return restTemplate.getForObject(builder.encode().toUriString(), Object.class);
+		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+		HttpHeaders headers = new HttpHeaders();
+		String auth = Base64.getEncoder().encodeToString(":".getBytes(UTF_8));
+		headers.add(HttpHeaders.AUTHORIZATION, "Basic " + auth);
+		return restTemplate.exchange(builder.encode().toUriString(), GET, new HttpEntity<>(headers), Object.class);
 	}
 
 	@Override
 	public boolean supportsPropertyName(String s) {
-		return s.equals(GP_BASE_URL) || s.equals(GP_RES_NAME_CHARGE) || s.equals(GP_RES_NAME_INVENTORY);
+		return s.equals(GP_BASE_URL);
 	}
 
 	@Override
 	public void globalPropertyChanged(GlobalProperty globalProperty) {
 		if (GP_BASE_URL.equals(globalProperty.getProperty())) {
 			baseUrl = null;
-		} else if (GP_RES_NAME_CHARGE.equals(globalProperty.getProperty())) {
-			chargeResource = null;
-		} else if (GP_RES_NAME_INVENTORY.equals(globalProperty.getProperty())) {
-			inventoryResource = null;
 		}
 	}
 
@@ -105,10 +93,6 @@ public class FhirProxyController implements GlobalPropertyListener {
 	public void globalPropertyDeleted(String s) {
 		if (GP_BASE_URL.equals(s)) {
 			baseUrl = null;
-		} else if (GP_RES_NAME_CHARGE.equals(s)) {
-			chargeResource = null;
-		} else if (GP_RES_NAME_INVENTORY.equals(s)) {
-			inventoryResource = null;
 		}
 	}
 }

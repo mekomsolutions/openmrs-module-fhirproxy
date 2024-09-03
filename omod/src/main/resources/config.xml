@@ -23,18 +23,6 @@
             The base URL for the external API
         </description>
     </globalProperty>
-    <globalProperty>
-        <property>${project.parent.artifactId}.resource.charge.item</property>
-        <description>
-            Charge item resource name in the external API
-        </description>
-    </globalProperty>
-    <globalProperty>
-        <property>${project.parent.artifactId}.resource.inventory.item</property>
-        <description>
-            Inventory item resource name in the external API
-        </description>
-    </globalProperty>
 
     <filter>
         <filter-name>FHIR Proxy</filter-name>
@@ -43,11 +31,11 @@
 
     <filter-mapping>
         <filter-name>FHIR Proxy</filter-name>
-        <url-pattern>/ws/fhir/R4/ChargeItemDefinition</url-pattern>
+        <url-pattern>/ws/fhir/R4/ChargeItemDefinition/*</url-pattern>
     </filter-mapping>
     <filter-mapping>
         <filter-name>FHIR Proxy</filter-name>
-        <url-pattern>/ws/fhir/R4/InventoryItem</url-pattern>
+        <url-pattern>/ws/fhir/R4/InventoryItem/*</url-pattern>
     </filter-mapping>
 </module>
 
