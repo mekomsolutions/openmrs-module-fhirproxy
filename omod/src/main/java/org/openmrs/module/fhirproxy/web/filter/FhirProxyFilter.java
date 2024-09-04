@@ -9,8 +9,8 @@
  */
 package org.openmrs.module.fhirproxy.web.filter;
 
-import static org.openmrs.module.fhirproxy.ProxyWebConstants.PATH_DELEGATE;
-import static org.openmrs.module.fhirproxy.ProxyWebConstants.REQ_ROOT_PATH;
+import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.PATH_DELEGATE;
+import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.REQ_ROOT_PATH;
 
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
-import org.openmrs.module.fhirproxy.ProxyWebConstants;
+import org.openmrs.module.fhirproxy.web.ProxyWebConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,15 +46,15 @@ public class FhirProxyFilter implements Filter {
 			LOG.debug("Intercepting request {}", ((HttpServletRequest) servletRequest).getRequestURI());
 		}
 
+		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		if (FhirProxyUtils.getConfig().isExternalApiEnabled()) {
-			HttpServletRequest request = (HttpServletRequest) servletRequest;
 			if (LOG.isDebugEnabled()) {
-				LOG.debug("Delegating to external API the FHIR request -> {}", request.getRequestURI());
+				LOG.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
 			}
 
-			//TODO Forward request parameters too
 			//TODO Possibly forward some useful headers too e.g. Content-Type and Accept
 			final String uri = request.getRequestURI();
+			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_QUERY_STR, request.getQueryString());
 			String[] resAndId = uri.substring(uri.lastIndexOf(REQ_ROOT_PATH) + REQ_ROOT_PATH.length()).split("/");
 			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, resAndId[0]);
 			if (resAndId.length == 2) {
@@ -62,6 +62,10 @@ public class FhirProxyFilter implements Filter {
 			}
 
 			servletRequest.getRequestDispatcher(PATH_DELEGATE).forward(servletRequest, servletResponse);
+		}
+
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Defaulting to OpenMRS to process FHIR request -> {}", request.getRequestURI());
 		}
 
 		filterChain.doFilter(servletRequest, servletResponse);

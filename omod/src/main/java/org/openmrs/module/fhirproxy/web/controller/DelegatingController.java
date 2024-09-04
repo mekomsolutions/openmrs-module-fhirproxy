@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.openmrs.module.fhirproxy.Config;
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
-import org.openmrs.module.fhirproxy.ProxyWebConstants;
+import org.openmrs.module.fhirproxy.web.ProxyWebConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -54,10 +54,19 @@ public class DelegatingController {
 			url += ("/" + id);
 		}
 
-		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+		final Object queryString = request.getAttribute(ProxyWebConstants.ATTRIB_QUERY_STR);
+		if (queryString != null) {
+			url += ("?" + queryString);
+		}
+
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Requesting resource at -> {}", url);
+		}
+
+		UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromHttpUrl(url);
 		final String auth = getEncoder().encodeToString((cfg.getUsername() + ":" + cfg.getPassword()).getBytes(UTF_8));
 		HttpHeaders headers = new HttpHeaders();
 		headers.add(HttpHeaders.AUTHORIZATION, "Basic " + auth);
-		return restTemplate.exchange(builder.encode().toUriString(), GET, new HttpEntity<>(headers), Object.class);
+		return restTemplate.exchange(urlBuilder.encode().toUriString(), GET, new HttpEntity<>(headers), Object.class);
 	}
 }

@@ -7,18 +7,20 @@
  * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
  * graphic logo is a trademark of OpenMRS Inc.
  */
-package org.openmrs.module.fhirproxy;
+package org.openmrs.module.fhirproxy.web;
 
 import static org.openmrs.module.fhirproxy.Constants.MODULE_ID;
 
 public class ProxyWebConstants {
-	
+
 	public static final String REQ_ROOT_PATH = "/ws/fhir/R4/";
-	
+
 	public static final String PATH_DELEGATE = "/module/" + MODULE_ID + "/delegate.htm";
-	
+
 	public static final String ATTRIB_RESOURCE_NAME = "resourceName";
-	
+
 	public static final String ATTRIB_RESOURCE_ID = "resourceId";
-	
+
+	public static final String ATTRIB_QUERY_STR = "queryString";
+
 }
