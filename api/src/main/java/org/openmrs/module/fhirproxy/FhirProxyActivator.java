@@ -9,7 +9,11 @@
  */
 package org.openmrs.module.fhirproxy;
 
+import java.io.IOException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.BaseModuleActivator;
+import org.openmrs.module.ModuleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +26,24 @@ public class FhirProxyActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void started() {
-		//TODO Load config and ensure required fields are set otherwise fail.
+		Config cfg;
+		try {
+			cfg = FhirProxyUtils.getConfig();
+		}
+		catch (IOException e) {
+			throw new ModuleException("Failed to load configuration file for the Fhir Proxy module", e);
+		}
+
+		if (cfg.isExternalApiEnabled()) {
+			if (StringUtils.isBlank(cfg.getBaseUrl())) {
+				throw new ModuleException("Fhir Proxy module requires baseUrl when external FHIR API is enabled");
+			} else if (StringUtils.isBlank(cfg.getUsername())) {
+				throw new ModuleException("Fhir Proxy module requires username when external FHIR API is enabled");
+			} else if (StringUtils.isBlank(cfg.getPassword())) {
+				throw new ModuleException("Fhir Proxy module requires password when external FHIR API is enabled");
+			}
+		}
+
 		log.info("FHIR Proxy module started");
 	}
 
