@@ -62,13 +62,13 @@ public class FhirProxyFilter implements Filter {
 			}
 
 			servletRequest.getRequestDispatcher(PATH_DELEGATE).forward(servletRequest, servletResponse);
-		}
+		} else {
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("Delegation to external FHIR API is disabled");
+			}
 
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("Defaulting to OpenMRS to process FHIR request -> {}", request.getRequestURI());
+			filterChain.doFilter(servletRequest, servletResponse);
 		}
-
-		filterChain.doFilter(servletRequest, servletResponse);
 	}
 
 	@Override
