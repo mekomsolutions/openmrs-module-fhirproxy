@@ -18,9 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FhirProxyActivator extends BaseModuleActivator {
-
-	private static final Logger log = LoggerFactory.getLogger(FhirProxyActivator.class);
-
+	
+	private static final Logger LOG = LoggerFactory.getLogger(FhirProxyActivator.class);
+	
 	/**
 	 * @see BaseModuleActivator#started()
 	 */
@@ -33,7 +33,7 @@ public class FhirProxyActivator extends BaseModuleActivator {
 		catch (IOException e) {
 			throw new ModuleException("Failed to load configuration file for the Fhir Proxy module", e);
 		}
-
+		
 		if (cfg.isExternalApiEnabled()) {
 			if (StringUtils.isBlank(cfg.getBaseUrl())) {
 				throw new ModuleException("Fhir Proxy module requires baseUrl when external FHIR API is enabled");
@@ -43,16 +43,16 @@ public class FhirProxyActivator extends BaseModuleActivator {
 				throw new ModuleException("Fhir Proxy module requires password when external FHIR API is enabled");
 			}
 		}
-
-		log.info("FHIR Proxy module started");
+		
+		LOG.info("FHIR Proxy module started");
 	}
-
+	
 	/**
 	 * @see BaseModuleActivator#stopped()
 	 */
 	@Override
 	public void stopped() {
-		log.info("FHIR Proxy module stopped");
+		LOG.info("FHIR Proxy module stopped");
 	}
-
+	
 }

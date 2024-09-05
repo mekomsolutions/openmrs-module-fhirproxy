@@ -35,17 +35,17 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @RestController("delegatingController")
 public class DelegatingController {
-
+	
 	private static final Logger LOG = LoggerFactory.getLogger(DelegatingController.class);
-
+	
 	private RestTemplate restTemplate;
-
+	
 	@GetMapping(ProxyWebConstants.PATH_DELEGATE)
 	public Object delegate(HttpServletRequest request) throws IOException {
 		if (restTemplate == null) {
 			restTemplate = new RestTemplate();
 		}
-
+		
 		final String resource = request.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME).toString();
 		final Config cfg = FhirProxyUtils.getConfig();
 		String url = cfg.getBaseUrl() + "/" + resource;
@@ -53,16 +53,16 @@ public class DelegatingController {
 		if (id != null) {
 			url += ("/" + id);
 		}
-
+		
 		final Object queryString = request.getAttribute(ProxyWebConstants.ATTRIB_QUERY_STR);
 		if (queryString != null) {
 			url += ("?" + queryString);
 		}
-
+		
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Requesting resource at -> {}", url);
 		}
-
+		
 		UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromHttpUrl(url);
 		final String auth = getEncoder().encodeToString((cfg.getUsername() + ":" + cfg.getPassword()).getBytes(UTF_8));
 		HttpHeaders headers = new HttpHeaders();

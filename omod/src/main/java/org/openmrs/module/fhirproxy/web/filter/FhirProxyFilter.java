@@ -32,26 +32,26 @@ import org.slf4j.LoggerFactory;
  * and InventoryItem FHIR resources and forwards them to it.
  */
 public class FhirProxyFilter implements Filter {
-
+	
 	private static final Logger LOG = LoggerFactory.getLogger(FhirProxyFilter.class);
-
+	
 	@Override
 	public void init(FilterConfig filterConfig) {
 	}
-
+	
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
 	        throws IOException, ServletException {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Intercepting request {}", ((HttpServletRequest) servletRequest).getRequestURI());
 		}
-
+		
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		if (FhirProxyUtils.getConfig().isExternalApiEnabled()) {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
 			}
-
+			
 			//TODO Possibly forward some useful headers too e.g. Content-Type and Accept
 			final String uri = request.getRequestURI();
 			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_QUERY_STR, request.getQueryString());
@@ -60,17 +60,17 @@ public class FhirProxyFilter implements Filter {
 			if (resAndId.length == 2) {
 				servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID, resAndId[1]);
 			}
-
+			
 			servletRequest.getRequestDispatcher(PATH_DELEGATE).forward(servletRequest, servletResponse);
 		} else {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Delegation to external FHIR API is disabled");
 			}
-
+			
 			filterChain.doFilter(servletRequest, servletResponse);
 		}
 	}
-
+	
 	@Override
 	public void destroy() {
 	}
