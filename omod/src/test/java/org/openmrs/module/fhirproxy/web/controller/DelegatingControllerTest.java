@@ -6,6 +6,8 @@ import static org.springframework.http.HttpMethod.GET;
 
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +24,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.client.RestTemplate;
 
 @RunWith(PowerMockRunner.class)
@@ -44,6 +45,9 @@ public class DelegatingControllerTest {
 	@Mock
 	private Config mockConfig;
 	
+	@Mock
+	private HttpServletRequest mockRequest;
+	
 	private DelegatingController controller;
 	
 	@Before
@@ -64,9 +68,8 @@ public class DelegatingControllerTest {
 		ArgumentCaptor<HttpEntity> httpEntityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
 		when(mockTemplate.exchange(eq(url), eq(GET), httpEntityCaptor.capture(), eq(Object.class)))
 		        .thenReturn(ResponseEntity.ok(expectedJson));
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, RESOURCE);
-		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(request)).getBody());
+		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
+		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
 	}
 	
 	@Test
@@ -77,10 +80,9 @@ public class DelegatingControllerTest {
 		ArgumentCaptor<HttpEntity> httpEntityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
 		when(mockTemplate.exchange(eq(url), eq(GET), httpEntityCaptor.capture(), eq(Object.class)))
 		        .thenReturn(ResponseEntity.ok(expectedJson));
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, RESOURCE);
-		request.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID, resId);
-		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(request)).getBody());
+		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
+		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID)).thenReturn(resId);
+		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
 	}
 	
 	@Test
@@ -91,10 +93,9 @@ public class DelegatingControllerTest {
 		ArgumentCaptor<HttpEntity> httpEntityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
 		when(mockTemplate.exchange(eq(url), eq(GET), httpEntityCaptor.capture(), eq(Object.class)))
 		        .thenReturn(ResponseEntity.ok(expectedJson));
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, RESOURCE);
-		request.setAttribute(ProxyWebConstants.ATTRIB_QUERY_STR, queryString);
-		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(request)).getBody());
+		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
+		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_QUERY_STR)).thenReturn(queryString);
+		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
 	}
 	
 }
