@@ -3,8 +3,8 @@ An OpenMRS module that intercepts and redirects fetch requests for `ChargeItemDe
 resources to an external API, with support for basic authentication.
 
 ## Configuration
-The module reads the configuration from a json file named `config.json` in a directory name `fhirproxy` which is located 
-in the application data directory, below is an example configuration file.
+The module reads the configuration from a json file named `config.json` in a directory named `fhirproxy` which is 
+located in the application data directory, below is an example configuration file.
 ```
 {
     "externalApiEnabled" : true,
