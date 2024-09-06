@@ -11,7 +11,8 @@
     <packaging>pom</packaging>
     <name>FHIR proxy Module</name>
     <description>
-        Intercepts requests for specific FHIR resources and redirects them to a configured external API
+        Intercepts fetch requests for `ChargeItemDefinition` and `InventoryItem` FHIR resources and redirects them to a
+        configured external API.
     </description>
 
     <organization>
