@@ -16,4 +16,11 @@ public class Config {
 	@Getter
 	private String password;
 	
+	public Config(boolean externalApiEnabled, String baseUrl, String username, String password) {
+		this.externalApiEnabled = externalApiEnabled;
+		this.baseUrl = baseUrl;
+		this.username = username;
+		this.password = password;
+	}
+	
 }

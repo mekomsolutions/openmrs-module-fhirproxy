@@ -3,21 +3,19 @@ An OpenMRS module that intercepts and redirects fetch requests for `ChargeItemDe
 resources to an external API, with support for basic authentication.
 
 ## Configuration
-The module reads the configuration from a json file named `config.json` in a directory named `fhirproxy` which is 
-located in the application data directory, below is an example configuration file.
+The module reads the configuration from a properties file named `config.properties` in a directory named `fhirproxy` 
+which is located in the application data directory, below is an example configuration file.
 ```
-{
-    "externalApiEnabled" : true,
-    "baseUrl" : "http://your-fhirserver.com/fhir/R4",
-    "username" : "test-user",
-    "password" : "test-password"
-}
+external.api.enabled=true
+base.url=http://your-fhirserver/fhir/R4
+username=test-user
+password=test-password
 ```
 #### Configuration Properties
-`externalApiEnabled`: When set to true, the module will delegate `GET` FHIR requests for `ChargeItemDefinition` and 
+`external.api.enabled`: When set to true, the module will delegate `GET` FHIR requests for `ChargeItemDefinition` and 
  `InventoryItem` to the configured external API.
 
-`baseUrl`: The root URL for the external FHIR API
+`base.url`: The root URL for the external FHIR API
 
 `username`: The username to authenticate to the external FHIR API
 

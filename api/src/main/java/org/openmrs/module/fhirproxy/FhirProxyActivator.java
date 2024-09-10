@@ -36,7 +36,7 @@ public class FhirProxyActivator extends BaseModuleActivator {
 		
 		if (cfg.isExternalApiEnabled()) {
 			if (StringUtils.isBlank(cfg.getBaseUrl())) {
-				throw new ModuleException("Fhir Proxy module requires baseUrl when external FHIR API is enabled");
+				throw new ModuleException("Fhir Proxy module requires base.url when external FHIR API is enabled");
 			} else if (StringUtils.isBlank(cfg.getUsername())) {
 				throw new ModuleException("Fhir Proxy module requires username when external FHIR API is enabled");
 			} else if (StringUtils.isBlank(cfg.getPassword())) {

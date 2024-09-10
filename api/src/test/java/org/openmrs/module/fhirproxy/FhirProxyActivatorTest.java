@@ -51,7 +51,7 @@ public class FhirProxyActivatorTest {
 		
 		Exception ex = Assert.assertThrows(ModuleException.class, () -> activator.started());
 		
-		assertEquals("Fhir Proxy module requires baseUrl when external FHIR API is enabled", ex.getMessage());
+		assertEquals("Fhir Proxy module requires base.url when external FHIR API is enabled", ex.getMessage());
 	}
 	
 	@Test

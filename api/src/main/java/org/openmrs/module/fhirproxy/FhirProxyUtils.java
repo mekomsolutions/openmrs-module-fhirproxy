@@ -1,13 +1,13 @@
 package org.openmrs.module.fhirproxy;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Properties;
 
 import org.openmrs.util.OpenmrsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Provides utility methods for the module.
@@ -29,8 +29,13 @@ public class FhirProxyUtils {
 			LOG.info("Loading config for FHIR proxy module");
 			
 			File configDir = OpenmrsUtil.getDirectoryInApplicationDataDirectory(Constants.MODULE_ID);
-			File configFile = new File(configDir, Constants.CONFIG_FILE);
-			config = new ObjectMapper().readValue(configFile, Config.class);
+			Properties props = new Properties();
+			props.load(new FileInputStream(new File(configDir, Constants.CONFIG_FILE)));
+			final boolean enabled = Boolean.valueOf(props.getProperty("external.api.enabled", "false"));
+			final String baseUrl = props.getProperty("base.url");
+			final String username = props.getProperty("username");
+			final String password = props.getProperty("password");
+			config = new Config(enabled, baseUrl, username, password);
 		}
 		
 		return config;
