@@ -15,6 +15,9 @@
 	
 	<!-- Module Activator -->
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.FhirProxyActivator</activator>
+    <aware_of_modules>
+        <aware_of_module version="2.2.0">fhir2</aware_of_module>
+    </aware_of_modules>
     
     <!-- Global properties -->
     <globalProperty>
@@ -23,19 +26,5 @@
             The base URL for the external API
         </description>
     </globalProperty>
-
-    <filter>
-        <filter-name>FHIR Proxy</filter-name>
-        <filter-class>org.openmrs.module.fhirproxy.web.filter.FhirProxyFilter</filter-class>
-    </filter>
-
-    <filter-mapping>
-        <filter-name>FHIR Proxy</filter-name>
-        <url-pattern>/ws/fhir2/R4/ChargeItemDefinition/*</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>FHIR Proxy</filter-name>
-        <url-pattern>/ws/fhir2/R4/InventoryItem/*</url-pattern>
-    </filter-mapping>
 </module>
 
