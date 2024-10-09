@@ -17,13 +17,13 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import lombok.extern.slf4j.Slf4j;
 import org.openmrs.module.fhirproxy.Config;
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
 import org.openmrs.module.fhirproxy.web.ProxyWebConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
@@ -33,15 +33,15 @@ import org.springframework.web.util.UriComponentsBuilder;
  * Provides a proxy mechanism for all GET requests for ChargeItemDefinition and InventoryItem FHIR
  * resources by delegating to a configured external API to process the request.
  */
+@Slf4j
 @RestController("delegatingController")
 public class DelegatingController {
-	
-	private static final Logger LOG = LoggerFactory.getLogger(DelegatingController.class);
 	
 	private RestTemplate restTemplate;
 	
 	@GetMapping(ProxyWebConstants.PATH_DELEGATE)
-	public Object delegate(HttpServletRequest request) throws IOException {
+	public ResponseEntity<?> delegate(HttpServletRequest request) throws IOException {
+		log.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
 		if (restTemplate == null) {
 			restTemplate = new RestTemplate();
 		}
@@ -59,14 +59,27 @@ public class DelegatingController {
 			url += ("?" + queryString);
 		}
 		
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("Requesting resource at -> {}", url);
+		if (log.isDebugEnabled()) {
+			log.debug("Requesting resource at -> {}", url);
 		}
 		
 		UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromHttpUrl(url);
 		final String auth = getEncoder().encodeToString((cfg.getUsername() + ":" + cfg.getPassword()).getBytes(UTF_8));
 		HttpHeaders headers = new HttpHeaders();
 		headers.add(HttpHeaders.AUTHORIZATION, "Basic " + auth);
-		return restTemplate.exchange(urlBuilder.encode().toUriString(), GET, new HttpEntity<>(headers), Object.class);
+
+			ResponseEntity<?> responseEntity = restTemplate.exchange(urlBuilder.encode().toUriString(), GET,
+			    new HttpEntity<>(headers), Object.class);
+			
+			// Create new HttpHeaders and copy headers, excluding the ones to remove
+			HttpHeaders newHeaders = new HttpHeaders();
+			responseEntity.getHeaders().forEach((key, value) -> {
+				if (!HttpHeaders.TRANSFER_ENCODING.equalsIgnoreCase(key) && !HttpHeaders.CONNECTION.equalsIgnoreCase(key)) {
+					newHeaders.put(key, value);
+				}
+			});
+			
+			return new ResponseEntity<>(responseEntity.getBody(), newHeaders, responseEntity.getStatusCode());
+
 	}
 }
