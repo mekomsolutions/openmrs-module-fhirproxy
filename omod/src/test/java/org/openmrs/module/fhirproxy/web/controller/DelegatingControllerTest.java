@@ -1,14 +1,5 @@
 package org.openmrs.module.fhirproxy.web.controller;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.http.HttpMethod.GET;
-
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,8 +14,22 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpMethod.GET;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(FhirProxyUtils.class)
@@ -69,7 +74,7 @@ public class DelegatingControllerTest {
 		when(mockTemplate.exchange(eq(url), eq(GET), httpEntityCaptor.capture(), eq(Object.class)))
 		        .thenReturn(ResponseEntity.ok(expectedJson));
 		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
-		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
+		assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
 	}
 	
 	@Test
@@ -82,7 +87,7 @@ public class DelegatingControllerTest {
 		        .thenReturn(ResponseEntity.ok(expectedJson));
 		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
 		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID)).thenReturn(resId);
-		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
+		assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
 	}
 	
 	@Test
@@ -95,7 +100,40 @@ public class DelegatingControllerTest {
 		        .thenReturn(ResponseEntity.ok(expectedJson));
 		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
 		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_QUERY_STR)).thenReturn(queryString);
-		Assert.assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
+		assertEquals(expectedJson, ((HttpEntity) controller.delegate(mockRequest)).getBody());
 	}
 	
+	@Test
+	public void delegate_shouldRemoveTransferEncodingHeader() throws Exception {
+		final String expectedJson = "{}";
+		final String url = BASE_URL + "/" + RESOURCE;
+		ArgumentCaptor<ResponseEntity<?>> httpEntityCaptor = ArgumentCaptor.forClass(ResponseEntity.class);
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.add(HttpHeaders.TRANSFER_ENCODING, "chunked");
+		responseHeaders.add(HttpHeaders.CONTENT_TYPE, "application/json");
+		when(mockTemplate.exchange(eq(url), eq(GET), httpEntityCaptor.capture(), eq(Object.class)))
+		        .thenReturn(new ResponseEntity<>(expectedJson, responseHeaders, HttpStatus.OK));
+		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
+		
+		ResponseEntity<?> response = controller.delegate(mockRequest);
+		
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(expectedJson, response.getBody());
+		assertFalse(response.getHeaders().containsKey(HttpHeaders.TRANSFER_ENCODING));
+		assertTrue(response.getHeaders().containsKey(HttpHeaders.CONTENT_TYPE));
+	}
+	
+	@Test
+	public void delegate_shouldReturnClientErrorStatusCode() throws Exception {
+		final String url = BASE_URL + "/" + RESOURCE;
+		ArgumentCaptor<HttpEntity<?>> httpEntityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+		when(mockTemplate.exchange(eq(url), eq(GET), httpEntityCaptor.capture(), eq(Object.class))).thenThrow(
+		    new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request", "Bad Request".getBytes(), UTF_8));
+		when(mockRequest.getAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME)).thenReturn(RESOURCE);
+		
+		ResponseEntity<?> response = controller.delegate(mockRequest);
+		
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals("Bad Request", response.getBody());
+	}
 }

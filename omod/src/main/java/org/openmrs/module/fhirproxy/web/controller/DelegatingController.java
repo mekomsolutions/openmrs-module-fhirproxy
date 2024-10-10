@@ -9,14 +9,6 @@
  */
 package org.openmrs.module.fhirproxy.web.controller;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Base64.getEncoder;
-import static org.springframework.http.HttpMethod.GET;
-
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.openmrs.module.fhirproxy.Config;
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
 import org.openmrs.module.fhirproxy.web.ProxyWebConstants;
@@ -24,10 +16,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Base64.getEncoder;
+import static org.springframework.http.HttpMethod.GET;
 
 /**
  * Provides a proxy mechanism for all GET requests for ChargeItemDefinition and InventoryItem FHIR
@@ -36,12 +37,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RestController("delegatingController")
 public class DelegatingController {
 	
-	private static final Logger LOG = LoggerFactory.getLogger(DelegatingController.class);
-	
 	private RestTemplate restTemplate;
 	
+	private static final Logger LOG = LoggerFactory.getLogger(DelegatingController.class);
+	
 	@GetMapping(ProxyWebConstants.PATH_DELEGATE)
-	public Object delegate(HttpServletRequest request) throws IOException {
+	public ResponseEntity<?> delegate(HttpServletRequest request) throws IOException {
+		LOG.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
 		if (restTemplate == null) {
 			restTemplate = new RestTemplate();
 		}
@@ -67,6 +69,22 @@ public class DelegatingController {
 		final String auth = getEncoder().encodeToString((cfg.getUsername() + ":" + cfg.getPassword()).getBytes(UTF_8));
 		HttpHeaders headers = new HttpHeaders();
 		headers.add(HttpHeaders.AUTHORIZATION, "Basic " + auth);
-		return restTemplate.exchange(urlBuilder.encode().toUriString(), GET, new HttpEntity<>(headers), Object.class);
+		
+		try {
+			ResponseEntity<?> responseEntity = restTemplate.exchange(urlBuilder.encode().toUriString(), GET,
+			    new HttpEntity<>(headers), Object.class);
+			HttpHeaders newHeaders = new HttpHeaders();
+			responseEntity.getHeaders().forEach((key, value) -> {
+				if (!HttpHeaders.TRANSFER_ENCODING.equalsIgnoreCase(key) && !HttpHeaders.CONNECTION.equalsIgnoreCase(key)) {
+					newHeaders.put(key, value);
+				}
+			});
+			
+			return new ResponseEntity<>(responseEntity.getBody(), newHeaders, responseEntity.getStatusCode());
+		}
+		catch (HttpClientErrorException clientErrorException) {
+			return new ResponseEntity<>(clientErrorException.getResponseBodyAsString(),
+			        clientErrorException.getStatusCode());
+		}
 	}
 }
