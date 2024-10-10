@@ -9,10 +9,11 @@
  */
 package org.openmrs.module.fhirproxy.web.controller;
 
-import lombok.extern.slf4j.Slf4j;
 import org.openmrs.module.fhirproxy.Config;
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
 import org.openmrs.module.fhirproxy.web.ProxyWebConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -33,15 +34,16 @@ import static org.springframework.http.HttpMethod.GET;
  * Provides a proxy mechanism for all GET requests for ChargeItemDefinition and InventoryItem FHIR
  * resources by delegating to a configured external API to process the request.
  */
-@Slf4j
 @RestController("delegatingController")
 public class DelegatingController {
 	
 	private RestTemplate restTemplate;
 	
+	private static final Logger LOG = LoggerFactory.getLogger(DelegatingController.class);
+	
 	@GetMapping(ProxyWebConstants.PATH_DELEGATE)
 	public ResponseEntity<?> delegate(HttpServletRequest request) throws IOException {
-		log.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
+		LOG.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
 		if (restTemplate == null) {
 			restTemplate = new RestTemplate();
 		}
@@ -59,8 +61,8 @@ public class DelegatingController {
 			url += ("?" + queryString);
 		}
 		
-		if (log.isDebugEnabled()) {
-			log.debug("Requesting resource at -> {}", url);
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Requesting resource at -> {}", url);
 		}
 		
 		UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromHttpUrl(url);
