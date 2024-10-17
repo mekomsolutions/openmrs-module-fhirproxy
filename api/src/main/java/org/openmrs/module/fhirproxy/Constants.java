@@ -15,4 +15,12 @@ public class Constants {
 	
 	public static final String CONFIG_FILE = "config.properties";
 	
+	public static final String RES_CHARGE_ITEM = "ChargeItemDefinition";
+	
+	public static final String RES_CHARGE_INVENTORY = "InventoryItem";
+	
+	public static final String GP_PRIV_CHARGE_ITEM = MODULE_ID + ".charge.item.definition.privileges";
+	
+	public static final String GP_PRIV_INVENTORY = MODULE_ID + ".inventory.item.privileges";
+	
 }
