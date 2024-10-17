@@ -21,9 +21,17 @@
     
     <!-- Global properties -->
     <globalProperty>
-        <property>${project.parent.artifactId}.external.api.base.url</property>
+        <property>${project.parent.artifactId}.charge.item.definition.privileges</property>
         <description>
-            The base URL for the external API
+            Comma separated list of privileges required to manage charge item definition FHIR resource, when the
+            external API is enabled
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>${project.parent.artifactId}.inventory.item.privileges</property>
+        <description>
+            Comma separated list of privileges required to manage item inventory FHIR resource when the
+            external API is enabled
         </description>
     </globalProperty>
 </module>

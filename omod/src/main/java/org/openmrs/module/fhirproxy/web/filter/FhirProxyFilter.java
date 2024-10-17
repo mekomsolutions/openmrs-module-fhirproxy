@@ -13,6 +13,8 @@ import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.PATH_DELEGATE;
 import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.REQ_ROOT_PATH;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -22,6 +24,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import org.openmrs.api.context.Context;
+import org.openmrs.module.fhirproxy.Constants;
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
 import org.openmrs.module.fhirproxy.web.ProxyWebConstants;
 import org.slf4j.Logger;
@@ -47,7 +51,7 @@ public class FhirProxyFilter implements Filter {
 		}
 		
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
-		if (FhirProxyUtils.getConfig().isExternalApiEnabled()) {
+		if (FhirProxyUtils.getConfig().isExternalApiEnabled() && Context.isSessionOpen()) {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
 			}
@@ -56,19 +60,27 @@ public class FhirProxyFilter implements Filter {
 			final String uri = request.getRequestURI();
 			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_QUERY_STR, request.getQueryString());
 			String[] resAndId = uri.substring(uri.lastIndexOf(REQ_ROOT_PATH) + REQ_ROOT_PATH.length()).split("/");
-			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, resAndId[0]);
+			final String resource = resAndId[0];
+			List<String> requiredPrivileges = new ArrayList<>();
+			if (Constants.RES_CHARGE_ITEM.equals(resource)) {
+				requiredPrivileges.addAll(FhirProxyUtils.getConfig().getChargeItemPrivileges());
+			} else if (Constants.RES_CHARGE_INVENTORY.equals(resource)) {
+				requiredPrivileges.addAll(FhirProxyUtils.getConfig().getInventoryItemPrivileges());
+			}
+			
+			requiredPrivileges.forEach(privilege -> Context.requirePrivilege(privilege));
+			servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_NAME, resource);
 			if (resAndId.length == 2) {
 				servletRequest.setAttribute(ProxyWebConstants.ATTRIB_RESOURCE_ID, resAndId[1]);
 			}
 			
 			servletRequest.getRequestDispatcher(PATH_DELEGATE).forward(servletRequest, servletResponse);
-		} else {
-			if (LOG.isDebugEnabled()) {
-				LOG.debug("Delegation to external FHIR API is disabled");
-			}
-			
-			filterChain.doFilter(servletRequest, servletResponse);
+			return;
+		} else if (LOG.isDebugEnabled()) {
+			LOG.debug("Delegation to external FHIR API is disabled");
 		}
+		
+		filterChain.doFilter(servletRequest, servletResponse);
 	}
 	
 	@Override
