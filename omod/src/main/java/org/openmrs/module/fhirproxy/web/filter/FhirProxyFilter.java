@@ -51,7 +51,7 @@ public class FhirProxyFilter implements Filter {
 		}
 		
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
-		if (FhirProxyUtils.getConfig().isExternalApiEnabled() && Context.isSessionOpen()) {
+		if (FhirProxyUtils.getConfig().isExternalApiEnabled() && Context.isAuthenticated()) {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Delegating to external API to process FHIR request -> {}", request.getRequestURI());
 			}
