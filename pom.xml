@@ -9,7 +9,7 @@
     <artifactId>fhirproxy</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>FHIR proxy Module</name>
+    <name>FHIR Proxy Module</name>
     <description>
         Intercepts fetch requests for `ChargeItemDefinition` and `InventoryItem` FHIR resources and redirects them to a
         configured external API.
