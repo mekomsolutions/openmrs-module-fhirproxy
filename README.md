@@ -20,3 +20,9 @@ password=test-password
 `username`: The username to authenticate to the external FHIR API
 
 `password`: The password to authenticate to the external FHIR API
+#### Global Properties
+`fhirproxy.charge.item.definition.privileges`: Comma separated list of privileges required to manage charge item definition FHIR resource, when the
+            external API is enabled
+
+`fhirproxy.inventory.item.privileges`: Comma separated list of privileges required to manage item inventory FHIR resource when the
+            external API is enabled
