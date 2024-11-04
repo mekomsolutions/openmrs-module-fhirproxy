@@ -11,7 +11,6 @@ package org.openmrs.module.fhirproxy;
 
 import java.io.IOException;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.BaseModuleActivator;
 import org.openmrs.module.ModuleException;
@@ -42,12 +41,6 @@ public class FhirProxyActivator extends BaseModuleActivator {
 				throw new ModuleException("Fhir Proxy module requires username when external FHIR API is enabled");
 			} else if (StringUtils.isBlank(cfg.getPassword())) {
 				throw new ModuleException("Fhir Proxy module requires password when external FHIR API is enabled");
-			} else if (CollectionUtils.isEmpty(cfg.getChargeItemPrivileges())) {
-				throw new ModuleException("Fhir Proxy module requires privileges for change item definition when "
-				        + "external FHIR API is enabled");
-			} else if (CollectionUtils.isEmpty(cfg.getInventoryItemPrivileges())) {
-				throw new ModuleException(
-				        "Fhir Proxy module requires privileges for inventory item when external FHIR API is enabled");
 			}
 		}
 		

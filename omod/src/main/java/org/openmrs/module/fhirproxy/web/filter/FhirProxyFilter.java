@@ -24,7 +24,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.ContextAuthenticationException;
 import org.openmrs.module.fhirproxy.Constants;
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
 import org.openmrs.module.fhirproxy.web.ProxyWebConstants;
@@ -63,8 +65,17 @@ public class FhirProxyFilter implements Filter {
 			final String resource = resAndId[0];
 			List<String> requiredPrivileges = new ArrayList<>();
 			if (Constants.RES_CHARGE_ITEM.equals(resource)) {
+				if (CollectionUtils.isEmpty(FhirProxyUtils.getConfig().getChargeItemPrivileges())) {
+					throw new ContextAuthenticationException(
+					        "Fhir Proxy module requires privileges for charge item definition when "
+					                + "external FHIR API is enabled");
+				}
 				requiredPrivileges.addAll(FhirProxyUtils.getConfig().getChargeItemPrivileges());
-			} else if (Constants.RES_CHARGE_INVENTORY.equals(resource)) {
+			} else if (Constants.RES_INVENTORY_ITEM.equals(resource)) {
+				if (CollectionUtils.isEmpty(FhirProxyUtils.getConfig().getInventoryItemPrivileges())) {
+					throw new ContextAuthenticationException("Fhir Proxy module requires privileges for inventory "
+					        + "item when external FHIR API is enabled");
+				}
 				requiredPrivileges.addAll(FhirProxyUtils.getConfig().getInventoryItemPrivileges());
 			}
 			

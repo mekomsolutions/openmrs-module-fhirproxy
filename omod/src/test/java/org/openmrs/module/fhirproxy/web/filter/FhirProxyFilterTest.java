@@ -1,5 +1,6 @@
 package org.openmrs.module.fhirproxy.web.filter;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.ATTRIB_QUERY_STR;
 import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.ATTRIB_RESOURCE_ID;
@@ -8,6 +9,7 @@ import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.PATH_DELEGATE;
 import static org.openmrs.module.fhirproxy.web.ProxyWebConstants.REQ_ROOT_PATH;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.servlet.FilterChain;
@@ -15,12 +17,14 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.ContextAuthenticationException;
 import org.openmrs.module.fhirproxy.Config;
 import org.openmrs.module.fhirproxy.Constants;
 import org.openmrs.module.fhirproxy.FhirProxyUtils;
@@ -90,6 +94,8 @@ public class FhirProxyFilterTest {
 		Mockito.when(mockConfig.isExternalApiEnabled()).thenReturn(true);
 		Mockito.when(mockRequest.getRequestURI()).thenReturn(uri);
 		Mockito.when(mockRequest.getRequestDispatcher(PATH_DELEGATE)).thenReturn(mockDispatcher);
+		Mockito.when(mockConfig.getChargeItemPrivileges()).thenReturn(Arrays.asList("test priv1"));
+		Mockito.when(mockConfig.getInventoryItemPrivileges()).thenReturn(Arrays.asList("test priv2"));
 		
 		filter.doFilter(mockRequest, mockResponse, mockChain);
 		
@@ -110,6 +116,66 @@ public class FhirProxyFilterTest {
 		Mockito.when(mockConfig.isExternalApiEnabled()).thenReturn(true);
 		filter.doFilter(mockRequest, mockResponse, mockChain);
 		Mockito.verifyNoInteractions(mockDispatcher);
+	}
+	
+	@Test
+	public void doFilter_shouldFailIfChargeItemPrivilegesIsNull() {
+		final String uri = REQ_ROOT_PATH + Constants.RES_CHARGE_ITEM;
+		Mockito.when(mockConfig.isExternalApiEnabled()).thenReturn(true);
+		Mockito.when(mockRequest.getRequestURI()).thenReturn(uri);
+		Mockito.when(mockRequest.getRequestDispatcher(PATH_DELEGATE)).thenReturn(mockDispatcher);
+		
+		Exception ex = Assert.assertThrows(ContextAuthenticationException.class,
+		    () -> filter.doFilter(mockRequest, mockResponse, mockChain));
+		
+		assertEquals(
+		    "Fhir Proxy module requires privileges for charge item definition when external FHIR API " + "is enabled",
+		    ex.getMessage());
+	}
+	
+	@Test
+	public void doFilter_shouldFailIfChargeItemPrivilegesIsEmpty() {
+		final String uri = REQ_ROOT_PATH + Constants.RES_CHARGE_ITEM;
+		Mockito.when(mockConfig.isExternalApiEnabled()).thenReturn(true);
+		Mockito.when(mockRequest.getRequestURI()).thenReturn(uri);
+		Mockito.when(mockRequest.getRequestDispatcher(PATH_DELEGATE)).thenReturn(mockDispatcher);
+		Mockito.when(mockConfig.getChargeItemPrivileges()).thenReturn(new ArrayList<>());
+		
+		Exception ex = Assert.assertThrows(ContextAuthenticationException.class,
+		    () -> filter.doFilter(mockRequest, mockResponse, mockChain));
+		
+		assertEquals(
+		    "Fhir Proxy module requires privileges for charge item definition when external FHIR API " + "is enabled",
+		    ex.getMessage());
+	}
+	
+	@Test
+	public void doFilter_shouldFailIfInventoryPrivilegesIsNull() {
+		final String uri = REQ_ROOT_PATH + Constants.RES_INVENTORY_ITEM;
+		Mockito.when(mockConfig.isExternalApiEnabled()).thenReturn(true);
+		Mockito.when(mockRequest.getRequestURI()).thenReturn(uri);
+		Mockito.when(mockRequest.getRequestDispatcher(PATH_DELEGATE)).thenReturn(mockDispatcher);
+		
+		Exception ex = Assert.assertThrows(ContextAuthenticationException.class,
+		    () -> filter.doFilter(mockRequest, mockResponse, mockChain));
+		
+		assertEquals("Fhir Proxy module requires privileges for inventory item when external FHIR API is enabled",
+		    ex.getMessage());
+	}
+	
+	@Test
+	public void doFilter_shouldFailIfInventoryPrivilegesIsEmpty() {
+		final String uri = REQ_ROOT_PATH + Constants.RES_INVENTORY_ITEM;
+		Mockito.when(mockConfig.isExternalApiEnabled()).thenReturn(true);
+		Mockito.when(mockRequest.getRequestURI()).thenReturn(uri);
+		Mockito.when(mockRequest.getRequestDispatcher(PATH_DELEGATE)).thenReturn(mockDispatcher);
+		Mockito.when(mockConfig.getInventoryItemPrivileges()).thenReturn(new ArrayList<>());
+		
+		Exception ex = Assert.assertThrows(ContextAuthenticationException.class,
+		    () -> filter.doFilter(mockRequest, mockResponse, mockChain));
+		
+		assertEquals("Fhir Proxy module requires privileges for inventory item when external FHIR API is enabled",
+		    ex.getMessage());
 	}
 	
 }
