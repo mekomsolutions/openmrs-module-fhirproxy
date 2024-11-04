@@ -16,8 +16,7 @@
 	<!-- Module Activator -->
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.FhirProxyActivator</activator>
     <aware_of_modules>
-        <aware_of_module version="2.2.0">org.openmrs.module.fhir2</aware_of_module>
-        <aware_of_module>org.openmrs.module.initializer</aware_of_module>
+        <aware_of_module>org.openmrs.module.fhir2</aware_of_module>
     </aware_of_modules>
 
     <filter>
