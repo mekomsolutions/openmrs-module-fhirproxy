@@ -87,8 +87,10 @@ public class FhirProxyFilter implements Filter {
 			
 			servletRequest.getRequestDispatcher(PATH_DELEGATE).forward(servletRequest, servletResponse);
 			return;
-		} else if (LOG.isDebugEnabled()) {
-			LOG.debug("Delegation to external FHIR API is disabled");
+		} else if (!FhirProxyUtils.getConfig().isExternalApiEnabled()) {
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("Delegation to external FHIR API is disabled");
+			}
 		}
 		
 		filterChain.doFilter(servletRequest, servletResponse);
