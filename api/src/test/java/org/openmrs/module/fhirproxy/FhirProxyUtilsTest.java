@@ -105,22 +105,22 @@ public class FhirProxyUtilsTest {
 	
 	@Test
 	public void resolveEnvVariables_shouldResolveSystemProperty() {
-		System.setProperty("TEST_PROP", "systemValue");
+		System.setProperty("OAUTH_ENABLED", "false");
 		
-		String result = FhirProxyUtils.resolveEnvVariables("${TEST_PROP}");
+		String result = FhirProxyUtils.resolveEnvVariables("${OAUTH_ENABLED}");
 		
 		assertNotNull(result);
-		assertEquals("systemValue", result);
+		assertEquals("false", result);
 	}
 	
 	@Test
 	public void resolveEnvVariables_shouldResolveEnvironmentVariable() {
-		setEnv("TEST_ENV", "envValue");
-
-		String result = FhirProxyUtils.resolveEnvVariables("${TEST_ENV}");
+		setEnv("OAUTH_SCOPE", "openid");
+		
+		String result = FhirProxyUtils.resolveEnvVariables("${OAUTH_SCOPE}");
 		
 		assertNotNull(result);
-		assertEquals("envValue", result);
+		assertEquals("openid", result);
 	}
 	
 	@Test
@@ -133,21 +133,21 @@ public class FhirProxyUtilsTest {
 	
 	@Test
 	public void resolveEnvVariables_shouldHandleMultiplePlaceholders() {
-		System.setProperty("PROP1", "value1");
-		setEnv("ENV1", "value2");
+		System.setProperty("AUTH_URI", "http://localhost:8080/auth");
+		setEnv("AUTH_URI2", "http://localhost:8080/auth2");
 		
-		String result = FhirProxyUtils.resolveEnvVariables("${PROP1} and ${ENV1}");
+		String result = FhirProxyUtils.resolveEnvVariables("${AUTH_URI} and ${AUTH_URI2}");
 		
 		assertNotNull(result);
-		assertEquals("value1 and value2", result);
+		assertEquals("http://localhost:8080/auth and http://localhost:8080/auth2", result);
 	}
 	
 	@Test
 	public void resolveEnvVariables_shouldLeaveUnresolvedPlaceholdersAsIs() {
-		String result = FhirProxyUtils.resolveEnvVariables("${PROP1} and ${ENV1}");
+		String result = FhirProxyUtils.resolveEnvVariables("${CLIENT_ID} and ${CLIENT_SECRET}");
 		
 		assertNotNull(result);
-		assertEquals("${PROP1} and ${ENV1}", result);
+		assertEquals("${CLIENT_ID} and ${CLIENT_SECRET}", result);
 	}
 	
 	// Helper method to set environment variables
