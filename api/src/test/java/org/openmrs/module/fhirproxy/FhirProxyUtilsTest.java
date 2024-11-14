@@ -1,5 +1,7 @@
 package org.openmrs.module.fhirproxy;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.fhirproxy.Constants.GP_PRIV_CHARGE_ITEM;
 import static org.openmrs.module.fhirproxy.Constants.GP_PRIV_INVENTORY;
@@ -7,6 +9,7 @@ import static org.openmrs.module.fhirproxy.Constants.MODULE_ID;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -27,6 +30,7 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
+import org.springframework.core.env.Environment;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ OpenmrsUtil.class, Context.class })
@@ -99,4 +103,70 @@ public class FhirProxyUtilsTest {
 		Assert.assertEquals("No privilege found with name " + privName, e.getMessage());
 	}
 	
+	@Test
+	public void resolveEnvVariables_shouldResolveSystemProperty() {
+		System.setProperty("TEST_PROP", "systemValue");
+		
+		String result = FhirProxyUtils.resolveEnvVariables("${TEST_PROP}");
+		
+		assertNotNull(result);
+		assertEquals("systemValue", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldResolveEnvironmentVariable() {
+		setEnv("TEST_ENV", "envValue");
+
+		String result = FhirProxyUtils.resolveEnvVariables("${TEST_ENV}");
+		
+		assertNotNull(result);
+		assertEquals("envValue", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldReturnOriginalStringIfNoMatch() {
+		String result = FhirProxyUtils.resolveEnvVariables("noPlaceholdersHere");
+		
+		assertNotNull(result);
+		assertEquals("noPlaceholdersHere", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldHandleMultiplePlaceholders() {
+		System.setProperty("PROP1", "value1");
+		setEnv("ENV1", "value2");
+		
+		String result = FhirProxyUtils.resolveEnvVariables("${PROP1} and ${ENV1}");
+		
+		assertNotNull(result);
+		assertEquals("value1 and value2", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldLeaveUnresolvedPlaceholdersAsIs() {
+		String result = FhirProxyUtils.resolveEnvVariables("${PROP1} and ${ENV1}");
+		
+		assertNotNull(result);
+		assertEquals("${PROP1} and ${ENV1}", result);
+	}
+	
+	// Helper method to set environment variables
+	@SuppressWarnings("unchecked")
+	private void setEnv(String key, String value) {
+		try {
+			Map<String, String> env = System.getenv();
+			Class<?> cl = env.getClass();
+			java.lang.reflect.Field field = cl.getDeclaredField("m");
+			field.setAccessible(true);
+			Map<String, String> writableEnv = (Map<String, String>) field.get(env);
+			if (value == null) {
+				writableEnv.remove(key);
+			} else {
+				writableEnv.put(key, value);
+			}
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to set environment variable", e);
+		}
+	}
 }
