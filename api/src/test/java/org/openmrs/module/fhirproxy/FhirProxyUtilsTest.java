@@ -1,5 +1,7 @@
 package org.openmrs.module.fhirproxy;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.fhirproxy.Constants.GP_PRIV_CHARGE_ITEM;
 import static org.openmrs.module.fhirproxy.Constants.GP_PRIV_INVENTORY;
@@ -7,6 +9,7 @@ import static org.openmrs.module.fhirproxy.Constants.MODULE_ID;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -27,6 +30,7 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
+import org.springframework.core.env.Environment;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ OpenmrsUtil.class, Context.class })
@@ -99,4 +103,70 @@ public class FhirProxyUtilsTest {
 		Assert.assertEquals("No privilege found with name " + privName, e.getMessage());
 	}
 	
+	@Test
+	public void resolveEnvVariables_shouldResolveSystemProperty() {
+		System.setProperty("OAUTH_ENABLED", "false");
+		
+		String result = FhirProxyUtils.resolveEnvVariables("${OAUTH_ENABLED}");
+		
+		assertNotNull(result);
+		assertEquals("false", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldResolveEnvironmentVariable() {
+		setEnv("OAUTH_SCOPE", "openid");
+		
+		String result = FhirProxyUtils.resolveEnvVariables("${OAUTH_SCOPE}");
+		
+		assertNotNull(result);
+		assertEquals("openid", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldReturnOriginalStringIfNoMatch() {
+		String result = FhirProxyUtils.resolveEnvVariables("noPlaceholdersHere");
+		
+		assertNotNull(result);
+		assertEquals("noPlaceholdersHere", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldHandleMultiplePlaceholders() {
+		System.setProperty("AUTH_URI", "http://localhost:8080/auth");
+		setEnv("AUTH_URI2", "http://localhost:8080/auth2");
+		
+		String result = FhirProxyUtils.resolveEnvVariables("${AUTH_URI} and ${AUTH_URI2}");
+		
+		assertNotNull(result);
+		assertEquals("http://localhost:8080/auth and http://localhost:8080/auth2", result);
+	}
+	
+	@Test
+	public void resolveEnvVariables_shouldLeaveUnresolvedPlaceholdersAsIs() {
+		String result = FhirProxyUtils.resolveEnvVariables("${CLIENT_ID} and ${CLIENT_SECRET}");
+		
+		assertNotNull(result);
+		assertEquals("${CLIENT_ID} and ${CLIENT_SECRET}", result);
+	}
+	
+	// Helper method to set environment variables
+	@SuppressWarnings("unchecked")
+	private void setEnv(String key, String value) {
+		try {
+			Map<String, String> env = System.getenv();
+			Class<?> cl = env.getClass();
+			java.lang.reflect.Field field = cl.getDeclaredField("m");
+			field.setAccessible(true);
+			Map<String, String> writableEnv = (Map<String, String>) field.get(env);
+			if (value == null) {
+				writableEnv.remove(key);
+			} else {
+				writableEnv.put(key, value);
+			}
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to set environment variable", e);
+		}
+	}
 }
